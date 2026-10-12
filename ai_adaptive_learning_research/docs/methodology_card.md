@@ -4,8 +4,7 @@
 
 - **Title:** The Effectiveness of Artificial Intelligence-Based Adaptive Platforms on Student Academic Performance in Higher Education
 - **Authors:** Nurali and Nurbakyt
-- **GitHub repository:** `https://github.com/nurba-git/research-methods.git` *(replace with the actual public repository URL after publishing)*
-
+- **GitHub repository:** `https://github.com/nurba-git/research-methods.git`
 ## 2. Research type and justification
 
 **Primary approach: Quantitative comparative study.** The research question concerns measurable differences in academic score gain and time spent learning. A real implementation may use a randomized controlled or quasi-experimental design, depending on access to students and institutional constraints. The repository currently demonstrates only the data-processing pipeline on synthetic data; it is not a completed student experiment.
