@@ -1,0 +1,18 @@
+experiment:
+  name: "ai_adaptive_learning_sample_comparison"
+  random_seed: 42
+  input_csv: "data/sample/student_results.csv"
+  output_dir: "results"
+
+columns:
+  student_id: "student_id"
+  pretest: "pretest_score"
+  traditional_posttest: "traditional_posttest_score"
+  adaptive_posttest: "adaptive_posttest_score"
+  traditional_time: "traditional_time_min"
+  adaptive_time: "adaptive_time_min"
+
+validation:
+  min_score: 0
+  max_score: 100
+  min_time: 0

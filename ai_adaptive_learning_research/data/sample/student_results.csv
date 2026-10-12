@@ -1,0 +1,9 @@
+student_id,pretest_score,traditional_posttest_score,adaptive_posttest_score,traditional_time_min,adaptive_time_min
+S01,52,65,72,60,52
+S02,61,70,76,55,48
+S03,48,60,67,68,57
+S04,70,78,82,45,42
+S05,55,66,73,62,54
+S06,64,72,79,50,44
+S07,43,57,63,72,61
+S08,58,69,75,58,49
