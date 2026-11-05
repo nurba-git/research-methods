@@ -1,0 +1,35 @@
+{
+  "n_traditional": 66,
+  "n_adaptive": 67,
+  "primary": {
+    "metric": "score_gain (points)",
+    "mean_difference_adaptive_minus_traditional": 2.9516056083220263,
+    "bootstrap_95ci": [
+      0.5363240615106295,
+      5.406659882406149
+    ],
+    "welch_t": 2.3630167252688437,
+    "welch_df": 130.75447089363865,
+    "welch_p_two_sided": 0.019600696248472754,
+    "hedges_g": 0.4075469493989322,
+    "mann_whitney_p_two_sided": 0.017645396583560687,
+    "reject_h0": true
+  },
+  "sensitivity_ancova": {
+    "model": "posttest ~ arm + pretest",
+    "adjusted_arm_effect": 2.9334377585798546,
+    "ci95": [
+      0.4706880427018172,
+      5.396187474457892
+    ],
+    "t": 2.356494346420193,
+    "df": 130,
+    "p_two_sided": 0.019942335070571707,
+    "pretest_slope": 1.0953003933094512
+  },
+  "secondary_time_on_task": {
+    "mean_difference_adaptive_minus_traditional_min": -8.335260817126496,
+    "welch_t": -10.711286668554802,
+    "welch_p_two_sided": 1.3643122344629757e-19
+  }
+}

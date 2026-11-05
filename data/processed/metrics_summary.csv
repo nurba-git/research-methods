@@ -1,0 +1,13 @@
+metric,unit,level,group,n,mean,sd,mean_ci_low,mean_ci_high,median,median_ci_low,median_ci_high,p25,p75,p95,p99
+score_gain,points,student,traditional,66,12.242,7.302,10.5,14.03,12.0,9.5,14.5,7.0,16.0,23.75,30.4
+score_gain,points,student,adaptive,67,15.194,7.099,13.478,16.881,15.0,13.0,17.0,10.0,19.0,28.0,32.34
+posttest_score,points,student,traditional,66,66.47,11.766,63.727,69.273,65.0,61.0,68.0,58.0,75.0,86.75,91.1
+posttest_score,points,student,adaptive,67,69.612,12.507,66.627,72.567,69.0,66.0,73.0,61.5,79.0,88.0,96.7
+pretest_score,points,student,traditional,66,54.227,9.262,52.045,56.455,53.5,51.0,57.5,48.0,60.0,68.5,75.1
+pretest_score,points,student,adaptive,67,54.418,8.659,52.373,56.448,55.0,52.0,58.0,48.5,61.0,65.7,73.04
+time_on_task,min/session,student,traditional,66,62.726,4.288,61.702,63.748,62.35,61.367,63.658,60.071,65.396,69.012,73.456
+time_on_task,min/session,student,adaptive,67,54.391,4.681,53.282,55.539,53.533,52.967,55.267,51.492,56.892,62.515,65.68
+quiz_score,%,session,traditional,409,70.23,13.176,68.945,71.499,70.0,68.3,72.1,61.2,78.9,93.46,99.992
+quiz_score,%,session,adaptive,404,73.611,12.39,72.434,74.818,74.0,71.9,75.5,64.85,82.625,94.485,99.488
+response_latency,ms,session,traditional,409,201.853,97.069,192.488,211.45,185.9,173.0,194.9,131.3,246.4,399.24,466.488
+response_latency,ms,session,adaptive,404,345.821,158.324,330.744,361.453,318.75,304.6,338.807,233.1,421.7,621.155,871.384

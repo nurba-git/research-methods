@@ -1,0 +1,9 @@
+group,guardrail,value,ci_low,ci_high,n,threshold,passed
+traditional,error_rate_warmup,0.0,0.0,0.0263,142,,
+traditional,error_rate_evaluation,0.0073,0.0025,0.0212,412,0.02,True
+traditional,p95_latency_ms_evaluation,399.24,,,409,1000.0,True
+traditional,attrition,0.0704,0.0305,0.1545,71,0.15,True
+adaptive,error_rate_warmup,0.0435,0.0201,0.0916,138,,
+adaptive,error_rate_evaluation,0.0122,0.0052,0.0283,409,0.02,True
+adaptive,p95_latency_ms_evaluation,621.155,,,404,1000.0,True
+adaptive,attrition,0.029,0.008,0.0997,69,0.15,True
