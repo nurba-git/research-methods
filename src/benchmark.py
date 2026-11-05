@@ -1,11 +1,20 @@
-"""Descriptive benchmark for a synthetic adaptive-learning sample."""
+"""Task 2 smoke test: descriptive between-group comparison on the 10-row sample.
+
+Usage (from the repository root):
+    python src/benchmark.py --config configs/config.yaml
+
+Writes results/summary.json and results/condition_metrics.csv.
+The sample is synthetic; the numbers only show that the pipeline runs.
+"""
 import argparse
 import csv
 import json
 from pathlib import Path
-from statistics import mean
+from statistics import mean, stdev
 
 import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_config(config_path: Path) -> dict:
@@ -23,111 +32,88 @@ def as_number(row: dict, key: str, row_number: int) -> float:
         raise ValueError(f"Row {row_number}: missing or invalid value for '{key}'.") from exc
 
 
-def run(config_path: Path) -> dict:
-    config = load_config(config_path)
-    root = config_path.resolve().parent.parent
-    exp = config["experiment"]
-    columns = config["columns"]
-    validation = config["validation"]
-
-    input_path = root / exp["input_csv"]
-    output_dir = root / exp["output_dir"]
-    output_dir.mkdir(parents=True, exist_ok=True)
-
+def read_records(input_path: Path, cfg: dict) -> list[dict]:
+    cols, val, groups = cfg["columns"], cfg["validation"], cfg["groups"]
+    allowed = {groups["baseline"], groups["treatment"]}
     records = []
     with input_path.open("r", newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
-        required = [
-            columns["student_id"], columns["pretest"],
-            columns["traditional_posttest"], columns["adaptive_posttest"],
-            columns["traditional_time"], columns["adaptive_time"],
-        ]
-        missing_columns = [name for name in required if name not in (reader.fieldnames or [])]
-        if missing_columns:
-            raise ValueError(f"CSV is missing required columns: {', '.join(missing_columns)}")
-
+        required = [cols[k] for k in ("student_id", "group", "pretest", "posttest", "learning_time")]
+        missing = [c for c in required if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f"CSV is missing required columns: {', '.join(missing)}")
         for row_number, row in enumerate(reader, start=2):
-            student_id = (row.get(columns["student_id"]) or "").strip()
-            if not student_id:
+            sid = (row.get(cols["student_id"]) or "").strip()
+            group = (row.get(cols["group"]) or "").strip()
+            if not sid:
                 raise ValueError(f"Row {row_number}: student_id cannot be empty.")
-            pre = as_number(row, columns["pretest"], row_number)
-            trad_post = as_number(row, columns["traditional_posttest"], row_number)
-            adapt_post = as_number(row, columns["adaptive_posttest"], row_number)
-            trad_time = as_number(row, columns["traditional_time"], row_number)
-            adapt_time = as_number(row, columns["adaptive_time"], row_number)
-
-            for label, score in [
-                ("pre-test", pre), ("traditional post-test", trad_post),
-                ("adaptive post-test", adapt_post),
-            ]:
-                if not validation["min_score"] <= score <= validation["max_score"]:
-                    raise ValueError(f"Row {row_number}: {label} score must be in the configured score range.")
-            if trad_time <= validation["min_time"] or adapt_time <= validation["min_time"]:
-                raise ValueError(f"Row {row_number}: learning times must be greater than {validation['min_time']}.")
-
-            records.append({
-                "student_id": student_id,
-                "pretest_score": pre,
-                "traditional_score_gain": trad_post - pre,
-                "adaptive_score_gain": adapt_post - pre,
-                "traditional_time_min": trad_time,
-                "adaptive_time_min": adapt_time,
-            })
-
+            if group not in allowed:
+                raise ValueError(f"Row {row_number}: group must be one of {sorted(allowed)}.")
+            pre = as_number(row, cols["pretest"], row_number)
+            post = as_number(row, cols["posttest"], row_number)
+            minutes = as_number(row, cols["learning_time"], row_number)
+            for label, score in (("pre-test", pre), ("post-test", post)):
+                if not val["min_score"] <= score <= val["max_score"]:
+                    raise ValueError(f"Row {row_number}: {label} score outside configured range.")
+            if minutes <= val["min_time"]:
+                raise ValueError(f"Row {row_number}: learning time must be > {val['min_time']}.")
+            records.append({"student_id": sid, "group": group, "pretest_score": pre,
+                            "posttest_score": post, "score_gain": post - pre,
+                            "learning_time_min": minutes})
     if not records:
         raise ValueError(f"No data rows found in {input_path}")
+    return records
 
-    traditional_gains = [r["traditional_score_gain"] for r in records]
-    adaptive_gains = [r["adaptive_score_gain"] for r in records]
-    traditional_times = [r["traditional_time_min"] for r in records]
-    adaptive_times = [r["adaptive_time_min"] for r in records]
 
-    summary = {
-        "experiment": exp["name"],
-        "data_note": "Synthetic demonstration data only; not real student evidence.",
-        "n_records": len(records),
-        "primary_metric": {
-            "name": "mean_score_gain_points",
-            "traditional_mean": round(mean(traditional_gains), 3),
-            "adaptive_mean": round(mean(adaptive_gains), 3),
-            "difference_adaptive_minus_traditional": round(mean(adaptive_gains) - mean(traditional_gains), 3),
-        },
-        "secondary_metric": {
-            "name": "mean_learning_time_minutes",
-            "traditional_mean": round(mean(traditional_times), 3),
-            "adaptive_mean": round(mean(adaptive_times), 3),
-            "difference_adaptive_minus_traditional": round(mean(adaptive_times) - mean(traditional_times), 3),
-        },
-    }
+def describe(values: list[float]) -> dict:
+    return {"n": len(values), "mean": round(mean(values), 3),
+            "sd": round(stdev(values), 3) if len(values) > 1 else None}
+
+
+def run(config_path: Path) -> dict:
+    cfg = load_config(config_path)
+    base, treat = cfg["groups"]["baseline"], cfg["groups"]["treatment"]
+    input_path = ROOT / cfg["sample"]["input_csv"]
+    output_dir = ROOT / cfg["sample"]["output_dir"]
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    records = read_records(input_path, cfg)
+    by_group = {g: [r for r in records if r["group"] == g] for g in (base, treat)}
+    for g, rows in by_group.items():
+        if not rows:
+            raise ValueError(f"No rows for group '{g}'.")
+
+    summary = {"experiment": cfg["experiment"]["name"],
+               "data_note": "Synthetic smoke-test sample; not real student evidence.",
+               "n_records": len(records)}
+    for metric in ("score_gain", "learning_time_min"):
+        stats = {g: describe([r[metric] for r in rows]) for g, rows in by_group.items()}
+        stats["difference_treatment_minus_baseline"] = round(
+            stats[treat]["mean"] - stats[base]["mean"], 3)
+        summary[metric] = stats
 
     metrics_path = output_dir / "condition_metrics.csv"
     with metrics_path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=[
-            "student_id", "pretest_score", "traditional_score_gain",
-            "adaptive_score_gain", "traditional_time_min", "adaptive_time_min",
-        ])
+        writer = csv.DictWriter(handle, fieldnames=list(records[0].keys()))
         writer.writeheader()
         writer.writerows(records)
-
     summary_path = output_dir / "summary.json"
-    with summary_path.open("w", encoding="utf-8") as handle:
-        json.dump(summary, handle, indent=2)
+    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print("Experiment completed successfully.")
     print(f"Valid records: {len(records)}")
-    print(f"Mean score gain — traditional: {summary['primary_metric']['traditional_mean']}")
-    print(f"Mean score gain — adaptive: {summary['primary_metric']['adaptive_mean']}")
-    print(f"Gain difference (adaptive - traditional): {summary['primary_metric']['difference_adaptive_minus_traditional']}")
-    print(f"Mean time — traditional: {summary['secondary_metric']['traditional_mean']} min")
-    print(f"Mean time — adaptive: {summary['secondary_metric']['adaptive_mean']} min")
-    print(f"Outputs: {metrics_path.relative_to(root)} and {summary_path.relative_to(root)}")
-    print("Reminder: sample data are synthetic and must not be presented as empirical findings.")
+    for metric, unit in (("score_gain", "points"), ("learning_time_min", "min")):
+        s = summary[metric]
+        print(f"{metric}: {base} {s[base]['mean']} ± {s[base]['sd']} {unit} | "
+              f"{treat} {s[treat]['mean']} ± {s[treat]['sd']} {unit} | "
+              f"diff {s['difference_treatment_minus_baseline']}")
+    print(f"Outputs: {metrics_path.relative_to(ROOT)} and {summary_path.relative_to(ROOT)}")
     return summary
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", default="configs/config.yaml", help="Path to experiment YAML configuration")
+    parser.add_argument("--config", default="configs/config.yaml", help="Path to YAML config")
     args = parser.parse_args()
     run(Path(args.config))
 

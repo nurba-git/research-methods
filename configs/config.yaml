@@ -1,18 +1,47 @@
+# Experiment configuration for the AI-adaptive-learning RCT pipeline.
+# All paths are relative to the repository root.
+
 experiment:
-  name: "ai_adaptive_learning_sample_comparison"
-  random_seed: 42
+  name: "ai_adaptive_learning_rct"
+  random_seed: 42            # used for simulation, bootstrap and jitter
+  design: "two-arm parallel-group RCT, 1:1, stratified by pre-test tercile"
+
+# --- Task 2: smoke test on the 10-row sample -------------------------------
+sample:
   input_csv: "data/sample/student_results.csv"
   output_dir: "results"
 
 columns:
   student_id: "student_id"
+  group: "group"
   pretest: "pretest_score"
-  traditional_posttest: "traditional_posttest_score"
-  adaptive_posttest: "adaptive_posttest_score"
-  traditional_time: "traditional_time_min"
-  adaptive_time: "adaptive_time_min"
+  posttest: "posttest_score"
+  learning_time: "learning_time_min"
+
+groups:
+  baseline: "traditional"    # control arm
+  treatment: "adaptive"      # AI-adaptive arm
 
 validation:
   min_score: 0
   max_score: 100
   min_time: 0
+
+# --- Task 3: full analysis on the raw session log ---------------------------
+simulation:                  # only used by src/simulate_data.py
+  n_students: 140            # 70 per arm (64 needed for d = 0.5, power 0.80, + 10% attrition)
+  n_sessions: 8
+  dropout_rate: 0.05
+
+analysis:
+  raw_jsonl: "data/raw/test_run.jsonl"
+  processed_dir: "data/processed"
+  figures_dir: "reports/figures"
+  warmup_sessions: 2         # sessions 1-2 = onboarding / cold-start calibration, excluded
+  n_bootstrap: 10000
+  ci_level: 0.95
+
+guardrails:
+  max_error_rate: 0.02       # share of evaluation sessions with status == "error"
+  max_p95_latency_ms: 1000   # p95 platform response latency in evaluation sessions
+  max_attrition: 0.15        # share of randomized students without a post-test
